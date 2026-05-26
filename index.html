@@ -509,28 +509,28 @@
 
 <!-- iOS install hint (shown once) -->
 <div class="install-banner" id="install-banner" style="display:none">
-  <span>📲</span>
-  <span>Installez l'app : appuyez sur <strong>Partager</strong> → <strong>Sur l'écran d'accueil</strong></span>
+  <span id="install-banner-text"></span>
   <button class="install-banner-close" onclick="dismissInstall()">✕</button>
 </div>
 
 <!-- Header -->
 <div class="header">
-  <div class="header-title">⛵ Bateau Expense</div>
+  <div class="header-title">⛵ <span id="header-title-text">Bateau Expense</span></div>
   <div class="header-actions">
-    <button class="icon-btn" onclick="showBalance()" title="Bilan">📊</button>
-    <button class="icon-btn" onclick="confirmClear()" title="Effacer tout" style="opacity:.8">🗑️</button>
+    <button class="icon-btn" id="lang-toggle" onclick="toggleLanguage()" title="EN/FR" style="font-size:14px;font-weight:600">FR</button>
+    <button class="icon-btn" onclick="showBalance()" id="balance-btn" title="Bilan">📊</button>
+    <button class="icon-btn" onclick="confirmClear()" id="clear-btn" title="Effacer tout" style="opacity:.8">🗑️</button>
   </div>
 </div>
 
 <!-- Stats -->
 <div class="stats-bar">
   <div>
-    <div class="stat-label">Total dépenses</div>
+    <div class="stat-label" id="stat-total-label">Total dépenses</div>
     <div class="stat-value" id="stat-total">0,00 €</div>
   </div>
   <div style="text-align:right">
-    <div class="stat-label">Dépenses</div>
+    <div class="stat-label" id="stat-count-label">Dépenses</div>
     <div class="stat-value" id="stat-count">0</div>
   </div>
 </div>
@@ -554,6 +554,116 @@
 // State
 // ═══════════════════════════════════════════════════
 let state = { participants: [], expenses: [] };
+
+// ═══════════════════════════════════════════════════
+// Internationalization (i18n)
+// ═══════════════════════════════════════════════════
+let currentLang = localStorage.getItem('boatExpenseLang') || 'fr';
+
+const translations = {
+  en: {
+    'app.title': 'Boat Expense',
+    'header.balance': 'Balance',
+    'header.clearAll': 'Clear All',
+    'header.language': 'Language',
+    'stats.total': 'Total Expenses',
+    'stats.expenses': 'Expense Count',
+    'button.add': '+ Add',
+    'button.cancel': 'Cancel',
+    'button.ok': 'OK',
+    'button.close': 'Close',
+    'button.delete': 'Delete',
+    'section.participants': 'Participants',
+    'placeholder.participantName': 'First name or nickname',
+    'dialog.newParticipant': 'New Participant',
+    'dialog.deleteParticipant': 'Remove {name}?',
+    'dialog.deleteParticipantMsg': 'Existing expenses will remain recorded.',
+    'state.noParticipants': 'No participants',
+    'state.getStarted': 'Tap + to get started',
+    'state.noExpenses': 'No Expenses',
+    'state.addFirstParticipants': "Add participants first using the + Add button.",
+    'section.expense': 'Expense',
+    'placeholder.expenseDesc': 'Description (ex: Fuel, Meal…)',
+    'dialog.newExpense': 'New Expense ⛵',
+    'button.submit': 'Add',
+    'section.whoPaid': 'Who paid?',
+    'section.whoShares': 'Who shares?',
+    'hint.perPerson': '→ {amount} per person',
+    'dialog.deleteExpense': 'Delete this expense?',
+    'dialog.deleteAllExpenses': 'Delete all expenses?',
+    'dialog.deleteExpensesCount': '{count} expense(s) will be deleted.',
+    'error.missingField': 'Missing field',
+    'error.description': 'Enter a description.',
+    'error.amount': 'Enter a valid amount.',
+    'error.selectParticipants': 'Select at least one participant.',
+    'dialog.balance': 'Balance ⚖️',
+    'section.balances': 'Balances',
+    'section.settlements': 'Settlements',
+    'state.allBalanced': '✅ All balanced!',
+    'state.noParticipantsList': 'No participants',
+    'hint.installApp': '📲\nInstall app: tap **Share** → **Add to Home Screen**',
+    'perPerson': '/person',
+  },
+  fr: {
+    'app.title': 'Bateau Expense',
+    'header.balance': 'Bilan',
+    'header.clearAll': 'Effacer tout',
+    'header.language': 'Langue',
+    'stats.total': 'Total dépenses',
+    'stats.expenses': 'Dépenses',
+    'button.add': '+ Ajouter',
+    'button.cancel': 'Annuler',
+    'button.ok': 'OK',
+    'button.close': 'Fermer',
+    'button.delete': 'Supprimer',
+    'section.participants': 'Participants',
+    'placeholder.participantName': 'Prénom ou surnom',
+    'dialog.newParticipant': 'Nouveau participant',
+    'dialog.deleteParticipant': 'Supprimer {name} ?',
+    'dialog.deleteParticipantMsg': 'Les dépenses existantes resteront enregistrées.',
+    'state.noParticipants': 'Aucun participant',
+    'state.getStarted': 'Appuyez sur + pour commencer',
+    'state.noExpenses': 'Aucune dépense',
+    'state.addFirstParticipants': "Ajoutez d'abord des participants avec le bouton « + Ajouter ».",
+    'section.expense': 'Dépense',
+    'placeholder.expenseDesc': 'Description (ex: Carburant, Repas…)',
+    'dialog.newExpense': 'Nouvelle dépense ⛵',
+    'button.submit': 'Ajouter',
+    'section.whoPaid': 'Qui a payé ?',
+    'section.whoShares': 'Qui partage ?',
+    'hint.perPerson': '→ {amount} par personne',
+    'dialog.deleteExpense': 'Supprimer cette dépense ?',
+    'dialog.deleteAllExpenses': 'Supprimer toutes les dépenses ?',
+    'dialog.deleteExpensesCount': '{count} dépense(s) seront supprimées.',
+    'error.missingField': 'Champ manquant',
+    'error.description': 'Entrez une description.',
+    'error.amount': 'Entrez un montant valide.',
+    'error.selectParticipants': 'Sélectionnez au moins un participant.',
+    'dialog.balance': 'Bilan ⚖️',
+    'section.balances': 'Soldes',
+    'section.settlements': 'Remboursements à faire',
+    'state.allBalanced': '✅ Tout est équilibré !',
+    'state.noParticipantsList': 'Aucun participant',
+    'hint.installApp': '📲\nInstallez l\'app : appuyez sur **Partager** → **Sur l\'écran d\'accueil**',
+    'perPerson': '/pers.',
+  }
+};
+
+function t(key, vars = {}) {
+  let str = translations[currentLang]?.[key] || translations['en']?.[key] || key;
+  for (const [k, v] of Object.entries(vars)) {
+    str = str.replace('{' + k + '}', v);
+  }
+  return str;
+}
+
+function setLanguage(lang) {
+  if (!translations[lang]) return;
+  currentLang = lang;
+  localStorage.setItem('boatExpenseLang', lang);
+  render();
+  updateLanguageToggle();
+}
 
 function loadState() {
   try {
@@ -622,6 +732,8 @@ function renderStats() {
   const total = state.expenses.reduce((s, e) => s + e.amount, 0);
   document.getElementById('stat-total').textContent = fmtCur(total);
   document.getElementById('stat-count').textContent = state.expenses.length;
+  document.getElementById('stat-total-label').textContent = t('stats.total');
+  document.getElementById('stat-count-label').textContent = t('stats.expenses');
 }
 
 function renderParticipants() {
@@ -632,13 +744,13 @@ function renderParticipants() {
     chip.className = 'chip';
     chip.innerHTML =
       `<span>${esc(name)}</span>` +
-      `<button class="chip-remove" aria-label="Supprimer ${esc(name)}">✕</button>`;
+      `<button class="chip-remove" aria-label="${esc(name)}">✕</button>`;
     chip.querySelector('.chip-remove').onclick = () => confirmRemoveParticipant(name);
     container.appendChild(chip);
   });
   const addBtn = document.createElement('button');
   addBtn.className = 'chip chip-add';
-  addBtn.textContent = '+ Ajouter';
+  addBtn.textContent = t('button.add');
   addBtn.onclick = showAddParticipant;
   container.appendChild(addBtn);
 }
@@ -649,8 +761,8 @@ function renderExpenses() {
     container.innerHTML =
       `<div class="empty-state">
         <div class="empty-icon">⛵</div>
-        <div class="empty-title">Aucune dépense</div>
-        <div class="empty-sub">Appuyez sur + pour commencer</div>
+        <div class="empty-title">${esc(t('state.noExpenses'))}</div>
+        <div class="empty-sub">${esc(t('state.getStarted'))}</div>
       </div>`;
     return;
   }
@@ -667,11 +779,11 @@ function renderExpenses() {
         </div>
         <div class="expense-meta">
           <div class="expense-paidby">👤 ${esc(exp.paidBy)}</div>
-          <div class="expense-share">${fmtCur(share)}/pers.</div>
+          <div class="expense-share">${fmtCur(share)}${t('perPerson')}</div>
         </div>
         <div class="expense-participants">${exp.participants.map(esc).join(' · ')}</div>
       </div>
-      <button class="expense-del" aria-label="Supprimer">✕</button>`;
+      <button class="expense-del" aria-label="">✕</button>`;
     item.querySelector('.expense-del').onclick = () => confirmDeleteExpense(i);
     container.appendChild(item);
   });
@@ -687,7 +799,7 @@ function addParticipant(name) {
 }
 
 function confirmRemoveParticipant(name) {
-  showConfirm(`Supprimer ${name} ?`, 'Les dépenses existantes resteront enregistrées.', 'Supprimer', () => {
+  showConfirm(t('dialog.deleteParticipant', { name }), t('dialog.deleteParticipantMsg'), t('button.delete'), () => {
     state.participants = state.participants.filter(p => p !== name);
     saveState(); render();
   });
@@ -699,7 +811,7 @@ function addExpense(exp) {
 }
 
 function confirmDeleteExpense(index) {
-  showConfirm('Supprimer cette dépense ?', '', 'Supprimer', () => {
+  showConfirm(t('dialog.deleteExpense'), '', t('button.delete'), () => {
     state.expenses.splice(index, 1);
     saveState(); render();
   });
@@ -708,9 +820,9 @@ function confirmDeleteExpense(index) {
 function confirmClear() {
   if (!state.expenses.length) return;
   showConfirm(
-    'Supprimer toutes les dépenses ?',
-    `${state.expenses.length} dépense(s) seront supprimées.`,
-    'Tout effacer',
+    t('dialog.deleteAllExpenses'),
+    t('dialog.deleteExpensesCount', { count: state.expenses.length }),
+    t('header.clearAll'),
     () => { state.expenses = []; saveState(); render(); }
   );
 }
@@ -730,7 +842,7 @@ function closeModal() { document.getElementById('modal-root').innerHTML = ''; }
 
 // Add participant
 function showAddParticipant() {
-  showPrompt('Nouveau participant', 'Prénom ou surnom', 'Ajouter', val => addParticipant(val.trim()));
+  showPrompt(t('dialog.newParticipant'), t('placeholder.participantName'), t('button.submit'), val => addParticipant(val.trim()));
 }
 
 // Add expense
@@ -738,7 +850,7 @@ let _sel = new Set();
 
 function showAddExpense() {
   if (!state.participants.length) {
-    showAlert('Aucun participant', "Ajoutez d'abord des participants avec le bouton « + Ajouter ».");
+    showAlert(t('state.noParticipants'), t('state.addFirstParticipants'));
     return;
   }
   _sel = new Set(state.participants);
@@ -755,15 +867,15 @@ function showAddExpense() {
     <div class="modal-overlay" id="add-overlay">
       <div class="modal">
         <div class="modal-header">
-          <button class="modal-btn left" onclick="closeModal()">Annuler</button>
-          <div class="modal-title">Nouvelle dépense ⛵</div>
-          <button class="modal-btn right" onclick="submitExpense()">Ajouter</button>
+          <button class="modal-btn left" onclick="closeModal()">${esc(t('button.cancel'))}</button>
+          <div class="modal-title">${esc(t('dialog.newExpense'))}</div>
+          <button class="modal-btn right" onclick="submitExpense()">${esc(t('button.submit'))}</button>
         </div>
 
-        <div class="section-title">Dépense</div>
+        <div class="section-title">${esc(t('section.expense'))}</div>
         <div class="form-card">
           <div class="form-row">
-            <input class="form-input" id="exp-desc" type="text" placeholder="Description (ex: Carburant, Repas…)" autocapitalize="sentences">
+            <input class="form-input" id="exp-desc" type="text" placeholder="${esc(t('placeholder.expenseDesc'))}" autocapitalize="sentences">
           </div>
           <div class="form-row">
             <input class="form-input" id="exp-amount" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="0,00">
@@ -771,14 +883,14 @@ function showAddExpense() {
           </div>
         </div>
 
-        <div class="section-title">Qui a payé ?</div>
+        <div class="section-title">${esc(t('section.whoPaid'))}</div>
         <div class="form-card">
           <div class="form-row">
             <select class="form-select" id="exp-paidby">${payerOpts}</select>
           </div>
         </div>
 
-        <div class="section-title">Qui partage ?</div>
+        <div class="section-title">${esc(t('section.whoShares'))}</div>
         <div class="form-card" id="checks-container">${checkRows}</div>
         <div class="share-hint" id="share-hint"></div>
         <div style="height:16px"></div>
@@ -808,7 +920,7 @@ function updateHint() {
   const n = _sel.size;
   const hint = document.getElementById('share-hint');
   if (!hint) return;
-  hint.textContent = (n > 0 && amt > 0) ? `→ ${fmtCur(amt / n)} par personne` : '';
+  hint.textContent = (n > 0 && amt > 0) ? t('hint.perPerson', { amount: fmtCur(amt / n) }) : '';
 }
 
 function submitExpense() {
@@ -816,9 +928,9 @@ function submitExpense() {
   const amt = parseFloat(document.getElementById('exp-amount').value);
   const paidBy = document.getElementById('exp-paidby').value;
 
-  if (!desc) return showAlert('Champ manquant', 'Entrez une description.');
-  if (!amt || amt <= 0) return showAlert('Champ manquant', 'Entrez un montant valide.');
-  if (!_sel.size) return showAlert('Champ manquant', 'Sélectionnez au moins un participant.');
+  if (!desc) return showAlert(t('error.missingField'), t('error.description'));
+  if (!amt || amt <= 0) return showAlert(t('error.missingField'), t('error.amount'));
+  if (!_sel.size) return showAlert(t('error.missingField'), t('error.selectParticipants'));
 
   closeModal();
   addExpense({ id: Date.now(), description: desc, amount: amt, paidBy, participants: [..._sel] });
@@ -840,7 +952,7 @@ function showBalance() {
           <div class="bal-amount ${cls}">${sign}${fmtCur(b.amount)}</div>
         </div>`;
       }).join('')
-    : '<div class="bal-row"><div class="bal-name" style="color:var(--tertiary)">Aucun participant</div></div>';
+    : `<div class="bal-row"><div class="bal-name" style="color:var(--tertiary)">${esc(t('state.noParticipantsList'))}</div></div>`;
 
   const settleRows = settlements.length
     ? settlements.map(s =>
@@ -850,21 +962,21 @@ function showBalance() {
           <span class="settle-to">${esc(s.to)}</span>
           <span class="settle-amt">${fmtCur(s.amount)}</span>
         </div>`).join('')
-    : `<div class="all-good">✅ Tout est équilibré !</div>`;
+    : `<div class="all-good">${esc(t('state.allBalanced'))}</div>`;
 
   openModal(`
     <div class="modal-overlay" id="bal-overlay">
       <div class="modal">
         <div class="modal-header">
           <div style="min-width:60px"></div>
-          <div class="modal-title">Bilan ⚖️</div>
-          <button class="modal-btn right" onclick="closeModal()">Fermer</button>
+          <div class="modal-title">${esc(t('dialog.balance'))}</div>
+          <button class="modal-btn right" onclick="closeModal()">${esc(t('button.close'))}</button>
         </div>
 
-        <div class="section-title">Soldes</div>
+        <div class="section-title">${esc(t('section.balances'))}</div>
         <div class="form-card">${balRows}</div>
 
-        <div class="section-title">Remboursements à faire</div>
+        <div class="section-title">${esc(t('section.settlements'))}</div>
         <div class="form-card">${settleRows}</div>
         <div style="height:16px"></div>
       </div>
@@ -888,7 +1000,7 @@ function showAlert(title, msg) {
         ${msg ? `<div class="alert-msg">${esc(msg)}</div>` : ''}
       </div>
       <div class="alert-btns">
-        <button class="alert-btn" style="font-weight:700">OK</button>
+        <button class="alert-btn" style="font-weight:700">${esc(t('button.ok'))}</button>
       </div>
     </div>`;
   el.querySelector('.alert-btn').onclick = () => el.remove();
@@ -905,7 +1017,7 @@ function showConfirm(title, msg, confirmLabel, onConfirm) {
         ${msg ? `<div class="alert-msg">${esc(msg)}</div>` : ''}
       </div>
       <div class="alert-btns">
-        <button class="alert-btn">Annuler</button>
+        <button class="alert-btn">${esc(t('button.cancel'))}</button>
         <button class="alert-btn destructive">${esc(confirmLabel)}</button>
       </div>
     </div>`;
@@ -925,7 +1037,7 @@ function showPrompt(title, placeholder, confirmLabel, onConfirm) {
       </div>
       <input class="alert-input" type="text" placeholder="${esc(placeholder)}" autocapitalize="words">
       <div class="alert-btns">
-        <button class="alert-btn">Annuler</button>
+        <button class="alert-btn">${esc(t('button.cancel'))}</button>
         <button class="alert-btn" style="font-weight:700">${esc(confirmLabel)}</button>
       </div>
     </div>`;
@@ -939,6 +1051,24 @@ function showPrompt(title, placeholder, confirmLabel, onConfirm) {
 }
 
 // ═══════════════════════════════════════════════════
+// Language toggle
+// ═══════════════════════════════════════════════════
+function toggleLanguage() {
+  const newLang = currentLang === 'fr' ? 'en' : 'fr';
+  setLanguage(newLang);
+}
+
+function updateLanguageToggle() {
+  const btn = document.getElementById('lang-toggle');
+  if (btn) {
+    btn.textContent = currentLang === 'fr' ? '🇫🇷' : '🇬🇧';
+    document.getElementById('header-title-text').textContent = t('app.title');
+    document.getElementById('balance-btn').title = t('header.balance');
+    document.getElementById('clear-btn').title = t('header.clearAll');
+  }
+}
+
+// ═══════════════════════════════════════════════════
 // iOS install hint
 // ═══════════════════════════════════════════════════
 function checkInstallHint() {
@@ -947,6 +1077,7 @@ function checkInstallHint() {
   const dismissed = localStorage.getItem('installDismissed');
   if (isIOS && !isStandalone && !dismissed) {
     document.getElementById('install-banner').style.display = 'flex';
+    document.getElementById('install-banner-text').innerHTML = t('hint.installApp');
   }
 }
 function dismissInstall() {
@@ -966,6 +1097,7 @@ if ('serviceWorker' in navigator) {
 // ═══════════════════════════════════════════════════
 loadState();
 render();
+updateLanguageToggle();
 checkInstallHint();
 </script>
 </body>
