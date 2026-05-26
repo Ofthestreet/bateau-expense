@@ -66,3 +66,9 @@ Application web progressive (PWA) pour suivre et partager les dépenses lors d'u
 - HTML / CSS / JavaScript natif (sans framework)
 - PWA avec Service Worker pour le mode hors-ligne
 - Déploiement automatique via GitHub Actions → GitHub Pages
+
+---
+
+> Built with [Claude](https://claude.ai) in no-code mode — zero manual code written.
+
+> Construit avec [Claude](https://claude.ai) en mode no-code — aucune ligne de code écrite manuellement.
