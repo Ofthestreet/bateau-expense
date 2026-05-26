@@ -110,23 +110,47 @@ const translations = {
 };
 ```
 
-**Helper function**:
+**Helper function** (supports variable substitution):
 ```javascript
-function t(key) {
-  return translations[currentLang][key] || key;
+function t(key, vars = {}) {
+  let str = translations[currentLang]?.[key] || translations['en']?.[key] || key;
+  for (const [k, v] of Object.entries(vars)) {
+    str = str.replace('{' + k + '}', v);
+  }
+  return str;
 }
 ```
+**Example with variables**:
+```javascript
+t('hint.perPerson', { amount: '€5.00' })
+// Returns: "→ €5.00 per person" (EN) or "→ €5.00 par personne" (FR)
+```
 
-**Language state**:
+**Language state & toggle**:
 ```javascript
 let currentLang = localStorage.getItem('boatExpenseLang') || 'fr';
 
 function setLanguage(lang) {
+  if (!translations[lang]) return;
   currentLang = lang;
   localStorage.setItem('boatExpenseLang', lang);
   render(); // Re-render UI with new language
+  updateLanguageToggle(); // Update button text
+}
+
+function toggleLanguage() {
+  const newLang = currentLang === 'fr' ? 'en' : 'fr';
+  setLanguage(newLang);
+}
+
+function updateLanguageToggle() {
+  const btn = document.getElementById('lang-toggle');
+  if (btn) {
+    btn.textContent = currentLang === 'fr' ? '🇫🇷' : '🇬🇧';
+  }
 }
 ```
+**Header button**: Flag emoji (🇫🇷/🇬🇧) in header, onclick calls `toggleLanguage()`
 
 ### Adding a New Language
 
@@ -175,9 +199,11 @@ function setLanguage(lang) {
 - **`computeBalances()`**: Calculate per-person balance (positive = owed to them)
 - **`computeSettlements()`**: Generate minimal settlement instructions (who pays whom)
 
-### Utilities
-- **`t(key)`**: Get translated string for current language
-- **`setLanguage(lang)`**: Switch language + re-render
+### Utilities & Internationalization
+- **`t(key, vars)`**: Get translated string for current language (supports variable substitution via `{key}`)
+- **`setLanguage(lang)`**: Switch language + re-render + update toggle button
+- **`toggleLanguage()`**: Toggle between FR ↔ EN
+- **`updateLanguageToggle()`**: Update header button flag emoji
 - **`esc(str)`**: Escape HTML special chars (XSS prevention)
 - **`fmtCur(amount)`**: Format number as currency (EUR)
 
@@ -227,9 +253,8 @@ function setLanguage(lang) {
 
 ## Git Workflow
 
-- **Branch naming**: Descriptive snake_case (e.g., `feat/language-toggle`, `fix/balance-calc`)
 - **Commits**: Conventional Commits style (e.g., `feat: add EN/FR language support`, `fix: settlement calculation`)
-- **PR workflow**: Push to feature branch → open PR against `main` → merge after review
+- **Branch**: Work directly on `main`
 - **Deployment**: Auto-triggers on push to `main` via GitHub Actions
 
 ## Troubleshooting
